@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Netflix Clone</title>
+
+<style>
+body { margin:0; font-family:Arial; background:#111; color:white; }
+
+/* AUTH */
+.auth-container { display:flex; height:100vh; justify-content:center; align-items:center; }
+.auth-box { background:#000; padding:30px; width:300px; }
+.auth-box input, .auth-box button { width:100%; padding:10px; margin:10px 0; }
+.auth-box button { background:red; border:none; color:white; cursor:pointer; }
+
+/* APP */
+#app { display:none; }
+header { display:flex; justify-content:space-between; padding:20px; position:fixed; width:100%; }
+.logo { color:red; font-size:24px; }
+
+.banner {
+    height:400px;
+    background:url('https://images.unsplash.com/photo-1606813907291-d86efa9b94db') center/cover;
+    padding:50px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.row { margin-left:20px; }
+.row-posters { display:flex; overflow-x:scroll; }
+.poster { width:150px; margin:10px; cursor:pointer; transition:0.3s; }
+.poster:hover { transform:scale(1.1); }
+
+/* MODAL */
+.modal {
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.9);
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+.modal iframe { width:80%; height:80%; }
+.close { position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; }
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="auth" class="auth-container">
+<div class="auth-box">
+<h2 id="title">Login</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button type="button" onclick="auth()">Login</button>
+<p onclick="toggle()" style="cursor:pointer">Switch to Signup</p>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+<header>
+<div class="logo">NETFLIX</div>
+<div onclick="logout()" style="cursor:pointer">Logout</div>
+</header>
+
+<div class="banner">
+<h1>Netflix Clone</h1>
+<button onclick="playTrailer()">▶ Play</button>
+</div>
+
+<div class="row"><h2>Trending</h2><div id="r1" class="row-posters"></div></div>
+<div class="row"><h2>Action</h2><div id="r2" class="row-posters"></div></div>
+<div class="row"><h2>Comedy</h2><div id="r3" class="row-posters"></div></div>
+<div class="row"><h2>Horror</h2><div id="r4" class="row-posters"></div></div>
+<div class="row"><h2>K-Drama</h2><div id="r5" class="row-posters"></div></div>
+<div class="row"><h2>Adventure</h2><div id="r6" class="row-posters"></div></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<span class="close" onclick="closeModal()">✖</span>
+<iframe id="trailer"></iframe>
+</div>
+
+<script>
+
+/* VARIABLES */
+const emailEl = document.getElementById("email");
+const passwordEl = document.getElementById("password");
+const authDiv = document.getElementById("auth");
+const app = document.getElementById("app");
+
+let isLogin = true;
+
+/* TOGGLE */
+function toggle(){
+    isLogin = !isLogin;
+    document.getElementById("title").innerText = isLogin ? "Login" : "Signup";
+}
+
+/* AUTH */
+function auth(){
+    let email = emailEl.value.trim();
+    let password = passwordEl.value.trim();
+
+    if(!email || !password){
+        alert("Enter email & password");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    if(isLogin){
+        let user = users.find(u => u.email === email && u.password === password);
+        if(user){
+            localStorage.setItem("user", email);
+            load();
+        } else {
+            alert("Invalid email or password");
+        }
+    } else {
+        let exists = users.find(u => u.email === email);
+        if(exists){
+            alert("User already exists");
+            return;
+        }
+        users.push({ email, password });
+        localStorage.setItem("users", JSON.stringify(users));
+        alert("Signup successful! Now login.");
+        toggle();
+    }
+}
+
+/* LOAD */
+function load(){
+    authDiv.style.display = "none";
+    app.style.display = "block";
+}
+
+if(localStorage.getItem("user")) load();
+
+/* LOGOUT */
+function logout(){
+    localStorage.removeItem("user");
+    location.reload();
+}
+
+/* BIG DATASET (60+ items) */
+const data = {
+
+r1:[ // Trending (10)
+{t:"Stranger Things",i:"https://image.tmdb.org/t/p/w500/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg",tr:"https://www.youtube.com/embed/b9EkMc79ZSU"},
+{t:"Money Heist",i:"https://image.tmdb.org/t/p/w500/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg",tr:"https://www.youtube.com/embed/_InqQJRqGW4"},
+{t:"Breaking Bad",i:"https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg",tr:"https://www.youtube.com/embed/HhesaQXLuRY"},
+{t:"Wednesday",i:"https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg",tr:"https://www.youtube.com/embed/Di310WS8zLk"},
+{t:"Dark",i:"https://image.tmdb.org/t/p/w500/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg",tr:"https://www.youtube.com/embed/ESEUoa-mz2c"},
+{t:"Narcos",i:"https://image.tmdb.org/t/p/w500/rTmal9fDbwh5F0waol2hq35U4ah.jpg",tr:"https://www.youtube.com/embed/xl8zdCY-abw"},
+{t:"Loki",i:"https://image.tmdb.org/t/p/w500/kEl2t3OhXc3Zb9FBh1AuYzRTgZp.jpg",tr:"https://www.youtube.com/embed/nW948Va-l10"},
+{t:"The Boys",i:"https://image.tmdb.org/t/p/w500/stTEycfG9928HYGEISBFaG1ngjM.jpg",tr:"https://www.youtube.com/embed/tcrNsIaQkb4"}
+],
+
+r2:[ // Action (10)
+{t:"John Wick",i:"https://image.tmdb.org/t/p/w500/fZPSd91yGE9fCcCe6OoQr6E3Bev.jpg",tr:"https://www.youtube.com/embed/2AUmvWm5ZDQ"},
+{t:"Mad Max",i:"https://image.tmdb.org/t/p/w500/8tZYtuWezp8JbcsvHYO0O46tFbo.jpg",tr:"https://www.youtube.com/embed/hEJnMQG9ev8"},
+{t:"Avengers",i:"https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",tr:"https://www.youtube.com/embed/6ZfuNTqbHE8"},
+{t:"Dark Knight",i:"https://image.tmdb.org/t/p/w500/1hRoyzDtpgMU7Dz4JF22RANzQO7.jpg",tr:"https://www.youtube.com/embed/EXeTwQWrcwY"},
+{t:"Extraction",i:"https://image.tmdb.org/t/p/w500/wlfDxbGEsW58vGhFljKkcR5IxDj.jpg",tr:"https://www.youtube.com/embed/L6P3nI6VnlY"},
+{t:"Gladiator",i:"https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",tr:"https://www.youtube.com/embed/owK1qxDselE"},
+{t:"Black Panther",i:"https://image.tmdb.org/t/p/w500/uxzzxijgPIY7slzFvMotPv8wjKA.jpg",tr:"https://www.youtube.com/embed/xjDjIWPwcPU"},
+{t:"Thor Ragnarok",i:"https://image.tmdb.org/t/p/w500/rzRwTcFvttcN1ZpX2xv4j3tSdJu.jpg",tr:"https://www.youtube.com/embed/ue80QwXMRHg"},
+],
+
+r3:[ // Comedy (10)
+{t:"Friends",i:"https://image.tmdb.org/t/p/w500/f496cm9enuEsZkSPzCwnTESEK5s.jpg",tr:"https://www.youtube.com/embed/hDNNmeeJs1Q"},
+{t:"Hangover",i:"https://image.tmdb.org/t/p/w500/uluhlXubGu1VxU63X9VHCLWDAYP.jpg",tr:"https://www.youtube.com/embed/tcdUhdOlz9M"},
+{t:"The Office",i:"https://image.tmdb.org/t/p/w500/qWnJzyZhyy74gjpSjIXWmuk0ifX.jpg",tr:"https://www.youtube.com/embed/Vmb1tqYqyII"},
+{t:"Brooklyn 99",i:"https://image.tmdb.org/t/p/w500/hgRMSOt7a1b8qyQR68vUixJPang.jpg",tr:"https://www.youtube.com/embed/sEOuJ4z5aTc"},
+{t:"Mr Bean",i:"https://image.tmdb.org/t/p/w500/lQx1t3t3GJbF8bUkpEoS9VhFZ7P.jpg",tr:"https://www.youtube.com/embed/4hJ6W7Xq0v0"},
+{t:"Big Bang Theory",i:"https://image.tmdb.org/t/p/w500/ooBGRQBdbGzBxAVfExiO8r7kloA.jpg",tr:"https://www.youtube.com/embed/WBb3fojgW0Q"},
+{t:"Modern Family",i:"https://image.tmdb.org/t/p/w500/sF4G7uP3t2sWb2u1XbZ1d1R4Y1F.jpg",tr:"https://www.youtube.com/embed/UbkqE4fpvdI"},
+{t:"Ted",i:"https://image.tmdb.org/t/p/w500/1QV9Yf1J6Fh7b1kq3G8H8lRkXx9.jpg",tr:"https://www.youtube.com/embed/tj2cQnZPZb8"},
+{t:"Mask",i:"https://image.tmdb.org/t/p/w500/8hJQxZ4YFv5qJg5n6Zp5K9t5Xy.jpg",tr:"https://www.youtube.com/embed/hO5h8Vf2Z9U"},
+{t:"Home Alone",i:"https://image.tmdb.org/t/p/w500/96hU6YV0JZk3p4x2v6l9d6X8c8v.jpg",tr:"https://www.youtube.com/embed/jEDaVHmw7r4"}
+],
+
+r4:[ // Horror (10)
+{t:"Conjuring",i:"https://image.tmdb.org/t/p/w500/wVYREutTvI2tmxr6ujrHT704wGF.jpg",tr:"https://www.youtube.com/embed/k10ETZ41q5o"},
+{t:"Annabelle",i:"https://image.tmdb.org/t/p/w500/yAg3QmD4k4X3Z2sPZz9W8V8Zr9P.jpg",tr:"https://www.youtube.com/embed/paFgQNPGlsg"},
+{t:"IT",i:"https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg",tr:"https://www.youtube.com/embed/FnCdOQsX5kc"},
+{t:"Nun",i:"https://image.tmdb.org/t/p/w500/sFC1ElvoKGdHJIWRpNB3xWJ9lJA.jpg",tr:"https://www.youtube.com/embed/pzD9zGcUNrw"},
+{t:"Quiet Place",i:"https://image.tmdb.org/t/p/w500/nAU74GmpUk7t5iklEp3bufwDq4n.jpg",tr:"https://www.youtube.com/embed/WR7cc5t7tv8"},
+{t:"Insidious",i:"https://image.tmdb.org/t/p/w500/1fXr8d6z7y8u9t5b6n6v7y8u9t.jpg",tr:"https://www.youtube.com/embed/zuZnRUcoWos"},
+{t:"Smile",i:"https://image.tmdb.org/t/p/w500/aPqcQwu4VGEewPhagWNncDbJ9Xp.jpg",tr:"https://www.youtube.com/embed/BcDK7lkzzsU"},
+{t:"Hereditary",i:"https://image.tmdb.org/t/p/w500/lHV8HHlhwNup2VbpiACtlKzaGIQ.jpg",tr:"https://www.youtube.com/embed/V6wWKNij_1M"},
+{t:"The Ring",i:"https://image.tmdb.org/t/p/w500/9cL9f8f7X8t5k5h9J8k8g7h7h.jpg",tr:"https://www.youtube.com/embed/ylE0kinje0I"},
+{t:"The Grudge",i:"https://image.tmdb.org/t/p/w500/5o0y2v6n7h8g9k0j9h8g7f6d.jpg",tr:"https://www.youtube.com/embed/O2NKzO-fxwQ"}
+],
+
+r5:[ // K-Drama (10)
+{t:"Squid Game",i:"https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg",tr:"https://www.youtube.com/embed/oqxAJKy0ii4"},
+{t:"Vincenzo",i:"https://image.tmdb.org/t/p/w500/7E8nLijS9AwwUEPu2oFYOVKhdFA.jpg",tr:"https://www.youtube.com/embed/S12-4mO8BWs"},
+{t:"All of Us Are Dead",i:"https://image.tmdb.org/t/p/w500/pTEFqAjLd5YTsMD6NSUxV6Dq7A6.jpg",tr:"https://www.youtube.com/embed/IN5TD4VRcSM"},
+{t:"Goblin",i:"https://image.tmdb.org/t/p/w500/cbZcO3nP1jZsZ2Gd3Zs8Zs8Zs8.jpg",tr:"https://www.youtube.com/embed/8AcNEVUzV4o"},
+{t:"Crash Landing",i:"https://image.tmdb.org/t/p/w500/6PrKZpRz7v7x7c5z6FQcmGeXgnP.jpg",tr:"https://www.youtube.com/embed/GVQGWgeVc4k"},
+{t:"Itaewon Class",i:"https://image.tmdb.org/t/p/w500/z0bq6h7v8c9x0z1a2s3d4f5g6h.jpg",tr:"https://www.youtube.com/embed/NeaHNQJ1kCo"},
+{t:"My Name",i:"https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",tr:"https://www.youtube.com/embed/MaJ7ZT70ve4"},
+{t:"Kingdom",i:"https://image.tmdb.org/t/p/w500/5U9i1z6Z1c0k6l9t6q8v5b4x7y.jpg",tr:"https://www.youtube.com/embed/4l-yByZpaaM"},
+{t:"Business Proposal",i:"https://image.tmdb.org/t/p/w500/fb2yX7a8c7d9f8g7h6j5k4l3m.jpg",tr:"https://www.youtube.com/embed/7uV3bq6H6vQ"},
+{t:"Start-Up",i:"https://image.tmdb.org/t/p/w500/6Z7x3t4u5v6w7x8y9z0a1b2c3.jpg",tr:"https://www.youtube.com/embed/1kB0l4n4h5o"}
+],
+
+r6:[ // Adventure (10)
+{t:"Interstellar",i:"https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",tr:"https://www.youtube.com/embed/zSWdZVtXT7E"},
+{t:"Avatar",i:"https://image.tmdb.org/t/p/w500/kmcqlZGaSh20zpTbuoF0Cdn07dT.jpg",tr:"https://www.youtube.com/embed/5PSNL1qE6VY"},
+{t:"Jumanji",i:"https://image.tmdb.org/t/p/w500/bXrZ5iHBEjH7WMidbUDQ0U2xbmr.jpg",tr:"https://www.youtube.com/embed/2QKg5SZ_35I"},
+{t:"Pirates",i:"https://image.tmdb.org/t/p/w500/z8onk7LV9Mmw6zKz4hT6pzzvmvl.jpg",tr:"https://www.youtube.com/embed/naQr0uTrH_s"},
+{t:"Jungle Book",i:"https://image.tmdb.org/t/p/w500/5yGV0r4Uq6uF1p2bT7h1Zb0h9qM.jpg",tr:"https://www.youtube.com/embed/C4qgAaxB_pc"},
+{t:"Indiana Jones",i:"https://image.tmdb.org/t/p/w500/ceG9VzoRAVGwivFU403Wc3AHRys.jpg",tr:"https://www.youtube.com/embed/sagmdpkWUqc"},
+{t:"Uncharted",i:"https://image.tmdb.org/t/p/w500/sqLowacltbZLoCa4KYye64RvvdQ.jpg",tr:"https://www.youtube.com/embed/eHp3MbsCbMg"},
+{t:"Life of Pi",i:"https://image.tmdb.org/t/p/w500/2T5bh1rQG7K2zU1S8u7lX9V8a6.jpg",tr:"https://www.youtube.com/embed/mZEZ35Fhvuc"},
+{t:"The Revenant",i:"https://image.tmdb.org/t/p/w500/oXUWEc5i3wYyFnL1Ycu8ppxxPvs.jpg",tr:"https://www.youtube.com/embed/LoebZZ8K5N0"},
+{t:"Gravity",i:"https://image.tmdb.org/t/p/w500/5V6C3zM7i1e4M8b9x2w3y4z5.jpg",tr:"https://www.youtube.com/embed/OiTiKOy59o4"}
+]
+
+};
+
+function loadMovies(row,data){
+let r=document.getElementById(row);
+data.forEach(m=>{
+let img=document.createElement("img");
+img.src=m.i;
+img.className="poster";
+img.title=m.t;
+img.onclick=()=>openModal(m.tr);
+r.appendChild(img);
+});
+}
+
+Object.keys(data).forEach(k=>loadMovies(k,data[k]));
+
+/* MODAL */
+const modal=document.getElementById("modal");
+const trailer=document.getElementById("trailer");
+
+function openModal(link){
+modal.style.display="flex";
+trailer.src=link;
+}
+
+function closeModal(){
+modal.style.display="none";
+trailer.src="";
+}
+
+function playTrailer(){
+openModal("https://www.youtube.com/embed/_InqQJRqGW4");
+}
+
+</script>
+
+</body>
+</html>
